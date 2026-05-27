@@ -1,0 +1,43 @@
+descargar el archivo
+
+wget https://raw.githubusercontent.com/KiyoPon27/seguridad-redes/main/defensa.sh
+
+Dale permisos de ejecución y córrelo con privilegios de administrador:
+
+chmod +x defensa.sh
+sudo ./defensa.sh
+
+Prueba 1: El escaneo inocente (Descubrimiento)
+Lanza un escaneo rápido a los puertos comunes de la IP de tu servidor:
+
+nmap -sS -p 80,1234 <IP_DEL_SERVIDOR>
+
+Qué va a pasar: En el milisegundo en que nmap intente tocar el puerto 1234 o intente meter una ráfaga para ver qué puertos están abiertos, la regla trampa saltará. iptables meterá la IP atacante en el archivo de memoria del kernel.
+
+Prueba 2: Comprobar el bloqueo total
+Inmediatamente después del primer escaneo, intenta hacer un ping o entrar al puerto 80 (que se supone que estaba permitido):
+
+ping <IP_DEL_SERVIDOR>
+# O intenta un escaneo agresivo:
+nmap -p 80 <IP_DEL_SERVIDOR>
+
+El resultado espectacular: La máquina objetivo se volvió completamente invisible para ti. El ping dará Request timeout y Nmap te dirá que el host parece estar apagado (Host seems down). El firewall te ha borrado del mapa.
+
+🧠 El Toque Maestro para el Profe (Cómo ver las tripas del Kernel)
+Mientras la máquina atacante está bloqueada, ve a la máquina del servidor y escribe este comando en la terminal. Esto va a dejar loco a tu profesor porque demuestra que sabes rastrear el estado del Kernel de Linux:
+
+sudo cat /proc/net/xt_recent/ESCANEADOR
+
+Lo que verás en pantalla:
+Aparecerá una línea con la IP exacta de tu máquina atacante, junto con los timestamps exactos en formato Unix de cada uno de los paquetes con los que intentó atacarte.
+
+También puedes ver los logs del sistema en tiempo real para ver cómo el kernel registra los bloqueos:
+
+sudo dmesg | grep "[ALERTA INTRUSO]"
+
+Tu Argumentación Técnica para Mañana
+Si montas esto en producción frente a él, tu defensa verbal tiene que ser impecable:
+
+"Profesor, he diseñado una arquitectura de Defensa Activa Perimetral Host-Based utilizando los módulos avanzados xt_recent y conntrack de Netfilter en el Kernel de Linux. En lugar de implementar un firewall estático que revele qué puertos están cerrados mediante respuestas RST/ACK, el sistema actúa como una trampilla dinámica.
+
+Al detectar patrones anómalos de escaneo por ráfagas (--hitcount) o la interacción con puertos señuelo (Honeypots), el firewall reescribe su comportamiento en tiempo de ejecución, aislando la dirección IP del adversario en una lista negra temporal en la memoria del kernel. Esto degrada por completo la fase de reconocimiento del atacante, forzándolo a perder tiempo y herramientas sin comprometer recursos del servidor".
